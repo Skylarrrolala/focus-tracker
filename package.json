@@ -1,0 +1,31 @@
+{
+  "name": "focus-tracker-desktop",
+  "version": "1.0.0",
+  "description": "Focus Tracker — a one-thing-at-a-time task tracker, as a Mac desktop app",
+  "main": "main.js",
+  "author": "Skylar",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.skylar.focustracker",
+    "productName": "Focus Tracker",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": ["dmg"]
+    },
+    "files": [
+      "main.js",
+      "app-files/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
