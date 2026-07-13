@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --mac"
+    "build": "electron-builder --mac",
+    "deploy": "electron-builder --mac --dir && rm -rf '/Applications/Focus Tracker.app' && cp -R 'dist/mac-arm64/Focus Tracker.app' /Applications/"
   },
   "devDependencies": {
     "electron": "^31.0.0",

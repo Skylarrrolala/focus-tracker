@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Focus. — a one-thing-at-a-time task tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body data-theme="light">
+
+<!-- AUTH SCREEN -->
+<div class="auth-wrap" id="authScreen">
+  <h1>Focus<span class="dot">.</span></h1>
+  <p>Sign in with a one-time code sent to your email.</p>
+  <input type="email" id="authEmail" placeholder="you@example.com">
+  <button class="btn btn-primary" id="sendCodeBtn" style="width:100%;">Send code</button>
+  <div id="codeStep" style="display:none; margin-top:14px;">
+    <input type="text" id="authCode" placeholder="Code from email" maxlength="10" inputmode="numeric" style="text-align:center; letter-spacing:4px; font-family:'JetBrains Mono',monospace;">
+    <button class="btn btn-primary" id="verifyCodeBtn" style="width:100%; margin-top:8px;">Verify &amp; sign in</button>
+  </div>
+  <div class="auth-status" id="authStatus"></div>
+</div>
+
+<!-- APP (hidden until signed in) -->
+<div id="app" style="display:none;">
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Focus<span class="dot">.</span></h1>
+      <small>one thing at a time</small>
+    </div>
+    <div class="header-right">
+      <div class="streak-badge">🔥 <b id="streakNum">0</b> day streak</div>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme">☾</button>
+      <button class="icon-btn" id="signOutBtn" title="Sign out">⎋</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="today">Today</button>
+    <button class="tab" data-tab="history">History</button>
+  </div>
+
+  <!-- TODAY TAB -->
+  <div id="tab-today">
+    <div class="card">
+      <div class="add-form">
+        <input type="text" id="taskName" placeholder="What are you working on?" maxlength="80">
+        <select id="taskCategory">
+          <option value="School">School</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="taskPriority">
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+        <input type="number" id="taskEstimate" placeholder="min" min="1" max="180" value="25">
+        <button class="btn btn-primary" id="addTaskBtn">Add</button>
+      </div>
+    </div>
+
+    <div class="card" id="pomodoroCard">
+      <div style="margin-bottom:12px;">
+        <strong style="font-size:14px;">Pomodoro run</strong>
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">Work in timed sets with a break in between.</div>
+      </div>
+      <div class="add-form" style="margin-bottom:10px;">
+        <select id="pomoTaskSelect" style="flex:1 1 220px;"></select>
+      </div>
+      <div class="add-form" style="margin-bottom:10px;">
+        <input type="number" id="pomoWork" min="5" max="90" value="25" title="Work minutes" style="width:60px;">
+        <span style="font-size:12px; color:var(--ink-soft);">min work</span>
+        <input type="number" id="pomoShortBreak" min="1" max="30" value="5" title="Short break minutes" style="width:60px;">
+        <span style="font-size:12px; color:var(--ink-soft);">min short break</span>
+        <input type="number" id="pomoLongBreak" min="5" max="60" value="15" title="Long break minutes" style="width:60px;">
+        <span style="font-size:12px; color:var(--ink-soft);">min long break</span>
+      </div>
+      <div class="add-form">
+        <select id="pomoSetsBeforeLong" title="Long break frequency">
+          <option value="2">Long break every 2 sets</option>
+          <option value="3" selected>Long break every 3 sets</option>
+          <option value="4">Long break every 4 sets</option>
+        </select>
+        <select id="pomoTotalSets" title="Total sets this run">
+          <option value="2">2 sets</option>
+          <option value="3" selected>3 sets</option>
+          <option value="4">4 sets</option>
+          <option value="0">Until I stop</option>
+        </select>
+        <button class="btn btn-primary" id="startPomodoroBtn">Start Pomodoro</button>
+      </div>
+    </div>
+
+    <div class="card" id="calendarCard">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong style="font-size:14px;">Today's schedule</strong>
+        <button class="icon-btn" id="refreshCalendarBtn" title="Connect / refresh Google Calendar">↻</button>
+      </div>
+      <div id="calendarList"><span class="cal-empty">Tap refresh to connect Google Calendar.</span></div>
+    </div>
+
+    <div class="chips" id="filterChips"></div>
+
+    <div class="card" id="taskListCard">
+      <div id="taskList"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none;">
+    <div class="stat-grid">
+      <div class="stat"><div class="num" id="statToday">0</div><div class="label">Sessions today</div></div>
+      <div class="stat"><div class="num" id="statMinutes">0</div><div class="label">Focus min today</div></div>
+      <div class="stat"><div class="num" id="statDistractions">0</div><div class="label">Distractions today</div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong style="font-size:14px;">Last 7 days</strong>
+        <span style="font-size:12px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace;">daily goal: <span id="goalDisplay">4</span> sessions
+          <button class="icon-btn" id="editGoalBtn" style="width:22px;height:22px;font-size:11px;margin-left:4px;">✎</button>
+        </span>
+      </div>
+      <div class="chart-bars" id="chartBars"></div>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:720px; margin:0 auto; display:flex; justify-content:center; gap:12px; padding-bottom:20px;">
+  <button class="btn btn-ghost" id="exportBtn" style="font-size:12px; padding:7px 16px;">Export backup (.json)</button>
+</div>
+
+<!-- FOCUS OVERLAY -->
+<div class="overlay" id="focusOverlay" style="display:none;">
+  <div class="focus-category" id="focusCategory">CATEGORY</div>
+  <div class="set-badge" id="setBadge"></div>
+  <div class="focus-task" id="focusTaskName">Task name</div>
+  <div class="ring-wrap breathe" id="ringWrap">
+    <svg viewBox="0 0 280 280">
+      <circle class="ring-bg" cx="140" cy="140" r="126"></circle>
+      <circle class="ring-fg" id="ringFg" cx="140" cy="140" r="126"></circle>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-time" id="ringTime">25:00</div>
+      <div class="ring-state" id="ringState">focusing</div>
+    </div>
+  </div>
+  <div class="meeting-warning" id="meetingWarning" style="display:none;"></div>
+  <div class="focus-controls">
+    <button class="btn btn-ghost" id="pauseBtn">Pause</button>
+    <button class="btn btn-primary" id="finishBtn">Finish early</button>
+  </div>
+  <button class="distraction-btn" id="distractionBtn">I got distracted</button>
+  <button class="distraction-btn" id="stopPomodoroBtn" style="display:none; margin-top:8px;">End Pomodoro run after this set</button>
+  <div class="distraction-count" id="distractionCount"></div>
+</div>
+
+<!-- BREAK MODAL -->
+<div class="modal-backdrop" id="breakModal" style="display:none;">
+  <div class="modal">
+    <h3>Nice work.</h3>
+    <p>Take a short break before the next one.</p>
+    <div class="ring-time" id="breakTime">5:00</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="skipBreakBtn">Skip break</button>
+      <button class="btn btn-primary" id="startBreakBtn">Start break</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEXT SET MODAL -->
+<div class="modal-backdrop" id="nextSetModal" style="display:none;">
+  <div class="modal">
+    <h3 id="nextSetTitle">Set 2 of 3</h3>
+    <p id="nextSetSubtitle">Ready to keep going?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="stopPomodoroFromModalBtn">Stop here</button>
+      <button class="btn btn-primary" id="startNextSetBtn">Start set</button>
+    </div>
+  </div>
+</div>
+
+<!-- POMODORO DONE MODAL -->
+<div class="modal-backdrop" id="pomodoroDoneModal" style="display:none;">
+  <div class="modal">
+    <h3>Pomodoro complete 🎉</h3>
+    <p id="pomodoroDoneText">You finished your sets.</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="closePomodoroDoneBtn">Nice</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
